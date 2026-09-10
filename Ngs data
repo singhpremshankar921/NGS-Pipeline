@@ -1,0 +1,1468 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyOpyyN7gWHpqTg/P4zLO5sP",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/singhpremshankar921/NGS-Pipeline/blob/main/Ngs%20data\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "Hi-4cCDHH_8c"
+      },
+      "outputs": [],
+      "source": [
+        "\n",
+        "!mkdir -p NGS-Pipeline/scripts\n",
+        "!mkdir -p NGS-Pipeline/data\n",
+        "!mkdir -p NGS-Pipeline/results\n",
+        "!touch NGS-Pipeline/data/.gitkeep\n",
+        "!touch NGS-Pipeline/results/.gitkeep"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!cd NGS-Pipeline && find . -maxdepth 2 -type f"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "CS83FEtzItcl",
+        "outputId": "8ce4f9ab-ffb7-469f-bffd-fffb4a6ece4b"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "./results/.gitkeep\n",
+            "./data/.gitkeep\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile NGS-Pipeline/scripts/01_download.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "ACCESSION=\"SRR29928471\"\n",
+        "\n",
+        "mkdir -p data\n",
+        "\n",
+        "prefetch \"$ACCESSION\"\n",
+        "\n",
+        "fasterq-dump \"$ACCESSION\" \\\n",
+        "    --split-files \\\n",
+        "    --outdir data\n",
+        "\n",
+        "echo \"FASTQ download completed.\""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "FQP-q4GVIxjj",
+        "outputId": "7da49a88-1413-4ae8-e514-59ca700c5f0e"
+      },
+      "execution_count": 3,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing NGS-Pipeline/scripts/01_download.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x NGS-Pipeline/scripts/01_download.sh"
+      ],
+      "metadata": {
+        "id": "g5e-8t5hJE3_"
+      },
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!wget -q https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz\n",
+        "!tar -xzf sratoolkit.current-ubuntu64.tar.gz\n",
+        "!export PATH=$PATH:/content/sratoolkit*/bin"
+      ],
+      "metadata": {
+        "id": "_S71-1y5Klt1"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!which prefetch\n",
+        "!which fasterq-dump"
+      ],
+      "metadata": {
+        "id": "saS3TV4JKsfY"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!apt-get update -qq\n",
+        "!apt-get install -y sra-toolkit fastqc fastp samtools"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "q8ABUVlnLfD5",
+        "outputId": "1c98eb91-7289-427e-c129-433601df7364"
+      },
+      "execution_count": 22,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "W: Skipping acquire of configured file 'main/source/Sources' as repository 'https://r2u.stat.illinois.edu/ubuntu noble InRelease' does not seem to provide it (sources.list entry misspelt?)\n",
+            "Reading package lists... Done\n",
+            "Building dependency tree... Done\n",
+            "Reading state information... Done\n",
+            "sra-toolkit is already the newest version (3.0.3+dfsg-6ubuntu5).\n",
+            "fastqc is already the newest version (0.12.1+dfsg-3).\n",
+            "fastp is already the newest version (0.23.4+dfsg-1).\n",
+            "samtools is already the newest version (1.19.2-1build2).\n",
+            "0 upgraded, 0 newly installed, 0 to remove and 23 not upgraded.\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!prefetch --version\n",
+        "!fasterq-dump --version\n",
+        "!fastqc --version\n",
+        "!fastp --version\n",
+        "!samtools --version | head -1"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "3TGUvlrTL81r",
+        "outputId": "faeeb199-24aa-4caa-90b2-3bed97afb4f7"
+      },
+      "execution_count": 23,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\n",
+            "prefetch : 3.0.3 ( 3.0.2 )\n",
+            "\n",
+            "\n",
+            "fasterq-dump : 3.0.3 ( 3.0.2 )\n",
+            "\n",
+            "[0.027s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "[0.027s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "FastQC v0.12.1\n",
+            "fastp 0.23.4\n",
+            "samtools 1.19.2\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!pip install -q multiqc"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "KtHMYSSwMGZQ",
+        "outputId": "2ea8bb27-8520-4602-9ba6-d56be032b88c"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m46.6/46.6 kB\u001b[0m \u001b[31m666.3 kB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m5.8/5.8 MB\u001b[0m \u001b[31m18.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m79.9/79.9 MB\u001b[0m \u001b[31m6.3 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m41.1/41.1 MB\u001b[0m \u001b[31m16.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m140.0/140.0 kB\u001b[0m \u001b[31m9.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m46.0/46.0 kB\u001b[0m \u001b[31m2.7 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m71.9/71.9 kB\u001b[0m \u001b[31m5.5 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m15.8/15.8 MB\u001b[0m \u001b[31m46.8 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m40.7/40.7 kB\u001b[0m \u001b[31m2.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m86.8/86.8 kB\u001b[0m \u001b[31m6.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m90.2/90.2 kB\u001b[0m \u001b[31m6.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!multiqc --version"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "CsxMHxcqMT6F",
+        "outputId": "bc33cedf-a921-44fc-fb8c-597def69812c"
+      },
+      "execution_count": 25,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "multiqc, version 1.35\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!apt-get install -y star"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "UaxV-b-RMXin",
+        "outputId": "ddd538a5-875f-43cc-ca9c-87ad1fb3067b"
+      },
+      "execution_count": 26,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Reading package lists... Done\n",
+            "Building dependency tree... Done\n",
+            "Reading state information... Done\n",
+            "Package star is not available, but is referred to by another package.\n",
+            "This may mean that the package is missing, has been obsoleted, or\n",
+            "is only available from another source\n",
+            "\n",
+            "E: Package 'star' has no installation candidate\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!STAR --version"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "90QOlIgZMb2C",
+        "outputId": "df8c75e5-1862-4d27-8738-915634aaf847"
+      },
+      "execution_count": 27,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/bin/bash: line 1: STAR: command not found\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!apt-get update -qq\n",
+        "!apt-get install -y hisat2"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ibvEkyQ3MeS3",
+        "outputId": "994c0205-6562-42a7-e58f-ef7a982eda79"
+      },
+      "execution_count": 28,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "W: Skipping acquire of configured file 'main/source/Sources' as repository 'https://r2u.stat.illinois.edu/ubuntu noble InRelease' does not seem to provide it (sources.list entry misspelt?)\n",
+            "Reading package lists... Done\n",
+            "Building dependency tree... Done\n",
+            "Reading state information... Done\n",
+            "The following additional packages will be installed:\n",
+            "  bcftools python3-hisat2\n",
+            "Suggested packages:\n",
+            "  python3-matplotlib texlive-latex-recommended\n",
+            "The following NEW packages will be installed:\n",
+            "  bcftools hisat2 python3-hisat2\n",
+            "0 upgraded, 3 newly installed, 0 to remove and 23 not upgraded.\n",
+            "Need to get 4,670 kB of archives.\n",
+            "After this operation, 15.2 MB of additional disk space will be used.\n",
+            "Get:1 http://archive.ubuntu.com/ubuntu noble/universe amd64 bcftools amd64 1.19-1build2 [791 kB]\n",
+            "Get:2 http://archive.ubuntu.com/ubuntu noble/universe amd64 hisat2 amd64 2.2.1-4 [3,866 kB]\n",
+            "Get:3 http://archive.ubuntu.com/ubuntu noble/universe amd64 python3-hisat2 all 2.2.1-4 [12.7 kB]\n",
+            "Fetched 4,670 kB in 3s (1,648 kB/s)\n",
+            "Selecting previously unselected package bcftools.\n",
+            "(Reading database ... 124034 files and directories currently installed.)\n",
+            "Preparing to unpack .../bcftools_1.19-1build2_amd64.deb ...\n",
+            "Unpacking bcftools (1.19-1build2) ...\n",
+            "Selecting previously unselected package hisat2.\n",
+            "Preparing to unpack .../hisat2_2.2.1-4_amd64.deb ...\n",
+            "Unpacking hisat2 (2.2.1-4) ...\n",
+            "Selecting previously unselected package python3-hisat2.\n",
+            "Preparing to unpack .../python3-hisat2_2.2.1-4_all.deb ...\n",
+            "Unpacking python3-hisat2 (2.2.1-4) ...\n",
+            "Setting up bcftools (1.19-1build2) ...\n",
+            "Setting up hisat2 (2.2.1-4) ...\n",
+            "Setting up python3-hisat2 (2.2.1-4) ...\n",
+            "Processing triggers for man-db (2.12.0-4build2) ...\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!hisat2 --version"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "LF-KNEs9NIhj",
+        "outputId": "255e4a71-b9f0-4595-909a-092bdefffd59"
+      },
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/usr/bin/hisat2-align-s version 2.2.1\n",
+            "64-bit\n",
+            "Built on Debian\n",
+            "14 October 2022\n",
+            "Compiler: gcc version 12.2.0 (Ubuntu 12.2.0-9ubuntu1) \n",
+            "Options: -O3   -funroll-loops -g3 -Wdate-time -D_FORTIFY_SOURCE=2 -std=c++11\n",
+            "Sizeof {int, long, long long, void*, size_t, off_t}: {4, 8, 8, 8, 8, 8}\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!mkdir -p NGS-Pipeline/scripts\n",
+        "!mkdir -p NGS-Pipeline/data\n",
+        "!mkdir -p NGS-Pipeline/reference\n",
+        "!mkdir -p NGS-Pipeline/results\n",
+        "\n",
+        "!touch NGS-Pipeline/data/.gitkeep\n",
+        "!touch NGS-Pipeline/reference/.gitkeep\n",
+        "!touch NGS-Pipeline/results/.gitkeep"
+      ],
+      "metadata": {
+        "id": "_3sHI7ZvNkbe"
+      },
+      "execution_count": 30,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile NGS-Pipeline/scripts/01_download.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "ACCESSION=\"SRR29928471\"\n",
+        "\n",
+        "mkdir -p data\n",
+        "\n",
+        "echo \"======================================\"\n",
+        "echo \"Downloading: $ACCESSION\"\n",
+        "echo \"======================================\"\n",
+        "\n",
+        "prefetch \"$ACCESSION\"\n",
+        "\n",
+        "echo \"Converting SRA to FASTQ...\"\n",
+        "\n",
+        "fasterq-dump \"$ACCESSION\" \\\n",
+        "    --split-files \\\n",
+        "    --outdir data \\\n",
+        "    --threads 2\n",
+        "\n",
+        "echo \"======================================\"\n",
+        "echo \"FASTQ conversion completed\"\n",
+        "echo \"======================================\"\n",
+        "\n",
+        "ls -lh data/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "P7FzmwDqNma1",
+        "outputId": "4213e386-3f27-4f54-ce1c-9b7af6185c20"
+      },
+      "execution_count": 31,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Overwriting NGS-Pipeline/scripts/01_download.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x NGS-Pipeline/scripts/01_download.sh"
+      ],
+      "metadata": {
+        "id": "SGoIy3ClNudG"
+      },
+      "execution_count": 32,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd NGS-Pipeline\n",
+        "!./scripts/01_download.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Iwhn_EzON2Eg",
+        "outputId": "674890d3-7d3d-43bf-c75d-3701adde7cec"
+      },
+      "execution_count": 33,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n",
+            "======================================\n",
+            "Downloading: SRR29928471\n",
+            "======================================\n",
+            "\n",
+            "2026-09-10T12:08:21 prefetch.3.0.3: Current preference is set to retrieve SRA Normalized Format files with full base quality scores.\n",
+            "2026-09-10T12:08:22 prefetch.3.0.3: 1) Downloading 'SRR29928471'...\n",
+            "2026-09-10T12:08:22 prefetch.3.0.3: SRA Normalized Format file is being retrieved, if this is different from your preference, it may be due to current file availability.\n",
+            "2026-09-10T12:08:22 prefetch.3.0.3:  Downloading via HTTPS...\n",
+            "2026-09-10T12:10:55 prefetch.3.0.3:  HTTPS download succeed\n",
+            "2026-09-10T12:11:00 prefetch.3.0.3:  'SRR29928471' is valid\n",
+            "2026-09-10T12:11:00 prefetch.3.0.3: 1) 'SRR29928471' was downloaded successfully\n",
+            "2026-09-10T12:11:00 prefetch.3.0.3: 'SRR29928471' has 0 unresolved dependencies\n",
+            "Converting SRA to FASTQ...\n",
+            "spots read      : 22,622,351\n",
+            "reads read      : 45,244,702\n",
+            "reads written   : 45,244,702\n",
+            "======================================\n",
+            "FASTQ conversion completed\n",
+            "======================================\n",
+            "total 19G\n",
+            "-rw-r--r-- 1 root root 9.4G Sep 10 12:15 SRR29928471_1.fastq\n",
+            "-rw-r--r-- 1 root root 9.4G Sep 10 12:15 SRR29928471_2.fastq\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "sItMowtcPwiD",
+        "outputId": "ef2a0637-5db1-4379-a357-3771f46f88a0"
+      },
+      "execution_count": 34,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!./scripts/01_download.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "VydwLN-eP4eU",
+        "outputId": "1fd99df5-6a71-4d87-e6dc-3e9f18fb9f4d"
+      },
+      "execution_count": 35,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "======================================\n",
+            "Downloading: SRR29928471\n",
+            "======================================\n",
+            "\n",
+            "2026-09-10T12:16:42 prefetch.3.0.3: Current preference is set to retrieve SRA Normalized Format files with full base quality scores.\n",
+            "2026-09-10T12:16:43 prefetch.3.0.3: 1) 'SRR29928471' is found locally\n",
+            "2026-09-10T12:16:43 prefetch.3.0.3: 'SRR29928471' has 0 unresolved dependencies\n",
+            "Converting SRA to FASTQ...\n",
+            "2026-09-10T12:16:43 fasterq-dump.3.0.3 err: fasterq-dump.c fastdump_csra() checking ouput-file '/content/NGS-Pipeline/data/SRR29928471.fastq' -> RC(rcExe,rcFile,rcPacking,rcName,rcExists)\n",
+            "fasterq-dump quit with error code 3\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "qt-lf03nP8Q2"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -lh data/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "lcj8r_vCQAvg",
+        "outputId": "7b900341-1671-44c3-e74c-2bb7599d9596"
+      },
+      "execution_count": 36,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 19G\n",
+            "-rw-r--r-- 1 root root 9.4G Sep 10 12:15 SRR29928471_1.fastq\n",
+            "-rw-r--r-- 1 root root 9.4G Sep 10 12:15 SRR29928471_2.fastq\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!head -8 data/SRR29928471_1.fastq"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "wVOkYp8PQEp2",
+        "outputId": "2db60942-1e5c-4ed7-e909-61bcab5301eb"
+      },
+      "execution_count": 37,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "@SRR29928471.1 A00261:833:HCMJ3DSX7:2:1101:4743:1000 length=150\n",
+            "NAACAGGGCTCAGAGCCAGAGGTTGGGGTGACCGAGGGTGGAGGGGTTGTGGGCAATGGGTTCGTGGCTGTCACAATAATGCTGTGATAATGCTGTGGTTTCCCAGCAGGGAGGTGGGAGCGGGGAGGGGGCTGCAGCCTGATGAGAGCC\n",
+            "+SRR29928471.1 A00261:833:HCMJ3DSX7:2:1101:4743:1000 length=150\n",
+            "#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:FFFFF:FFFFFFFF\n",
+            "@SRR29928471.2 A00261:833:HCMJ3DSX7:2:1101:14127:1000 length=150\n",
+            "NAAAATGTAAGAGAAGTCTATTAAGGCTGGACAGCCCAGGGTTATTTATACTCTCTCAGCCCCAAGTCCCCCGGACTAAAGACCTAAAGGCTGATTGACTCATTCCTGATTGATTTAATGGAAAGTCTCCCACCCCATCATCATTTGCCA\n",
+            "+SRR29928471.2 A00261:833:HCMJ3DSX7:2:1101:14127:1000 length=150\n",
+            "#FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF,FFFFFFFFFFFFFFFFFFFFFFFF::FFFFFF:F:FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile /content/NGS-Pipeline/scripts/02_fastqc.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "DATA=\"data\"\n",
+        "RESULTS=\"results/fastqc_raw\"\n",
+        "\n",
+        "mkdir -p \"$RESULTS\"\n",
+        "\n",
+        "echo \"Running FastQC on raw reads...\"\n",
+        "\n",
+        "fastqc \\\n",
+        "    \"$DATA/SRR29928471_1.fastq\" \\\n",
+        "    \"$DATA/SRR29928471_2.fastq\" \\\n",
+        "    --outdir \"$RESULTS\" \\\n",
+        "    --threads 2\n",
+        "\n",
+        "echo \"Raw FastQC completed.\"\n",
+        "\n",
+        "ls -lh \"$RESULTS\""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "8lF4Dg7NQMz_",
+        "outputId": "d433980b-bbdd-47d5-b4a6-20c08e19b49b"
+      },
+      "execution_count": 38,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing /content/NGS-Pipeline/scripts/02_fastqc.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x /content/NGS-Pipeline/scripts/02_fastqc.sh"
+      ],
+      "metadata": {
+        "id": "G24Rbe1EQOBB"
+      },
+      "execution_count": 39,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "2TCwlH8iQUIL",
+        "outputId": "553b276d-752c-4508-fbf1-12da92f64848"
+      },
+      "execution_count": 40,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!./scripts/02_fastqc.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "4MXtsV74QXZ-",
+        "outputId": "5c87ee41-1f57-4eb4-d399-01a8b47ba2fa"
+      },
+      "execution_count": 42,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Running FastQC on raw reads...\n",
+            "[0.002s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "[0.003s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "null\n",
+            "null\n",
+            "Started analysis of SRR29928471_1.fastq\n",
+            "Started analysis of SRR29928471_2.fastq\n",
+            "Approx 5% complete for SRR29928471_1.fastq\n",
+            "Approx 5% complete for SRR29928471_2.fastq\n",
+            "Approx 10% complete for SRR29928471_1.fastq\n",
+            "Approx 10% complete for SRR29928471_2.fastq\n",
+            "Approx 15% complete for SRR29928471_2.fastq\n",
+            "Approx 15% complete for SRR29928471_1.fastq\n",
+            "Approx 20% complete for SRR29928471_2.fastq\n",
+            "Approx 20% complete for SRR29928471_1.fastq\n",
+            "Approx 25% complete for SRR29928471_2.fastq\n",
+            "Approx 25% complete for SRR29928471_1.fastq\n",
+            "Approx 30% complete for SRR29928471_1.fastq\n",
+            "Approx 30% complete for SRR29928471_2.fastq\n",
+            "Approx 35% complete for SRR29928471_1.fastq\n",
+            "Approx 35% complete for SRR29928471_2.fastq\n",
+            "Approx 40% complete for SRR29928471_1.fastq\n",
+            "Approx 40% complete for SRR29928471_2.fastq\n",
+            "Approx 45% complete for SRR29928471_1.fastq\n",
+            "Approx 45% complete for SRR29928471_2.fastq\n",
+            "Approx 50% complete for SRR29928471_1.fastq\n",
+            "Approx 50% complete for SRR29928471_2.fastq\n",
+            "Approx 55% complete for SRR29928471_1.fastq\n",
+            "Approx 55% complete for SRR29928471_2.fastq\n",
+            "Approx 60% complete for SRR29928471_1.fastq\n",
+            "Approx 60% complete for SRR29928471_2.fastq\n",
+            "Approx 65% complete for SRR29928471_1.fastq\n",
+            "Approx 65% complete for SRR29928471_2.fastq\n",
+            "Approx 70% complete for SRR29928471_1.fastq\n",
+            "Approx 70% complete for SRR29928471_2.fastq\n",
+            "Approx 75% complete for SRR29928471_1.fastq\n",
+            "Approx 75% complete for SRR29928471_2.fastq\n",
+            "Approx 80% complete for SRR29928471_1.fastq\n",
+            "Approx 80% complete for SRR29928471_2.fastq\n",
+            "Approx 85% complete for SRR29928471_1.fastq\n",
+            "Approx 85% complete for SRR29928471_2.fastq\n",
+            "Approx 90% complete for SRR29928471_1.fastq\n",
+            "Approx 90% complete for SRR29928471_2.fastq\n",
+            "Approx 95% complete for SRR29928471_2.fastq\n",
+            "Approx 95% complete for SRR29928471_1.fastq\n",
+            "Analysis complete for SRR29928471_2.fastq\n",
+            "Analysis complete for SRR29928471_1.fastq\n",
+            "Raw FastQC completed.\n",
+            "total 3.0M\n",
+            "-rw-r--r-- 1 root root 590K Sep 10 12:31 SRR29928471_1_fastqc.html\n",
+            "-rw-r--r-- 1 root root 894K Sep 10 12:31 SRR29928471_1_fastqc.zip\n",
+            "-rw-r--r-- 1 root root 599K Sep 10 12:31 SRR29928471_2_fastqc.html\n",
+            "-rw-r--r-- 1 root root 905K Sep 10 12:31 SRR29928471_2_fastqc.zip\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile /content/NGS-Pipeline/scripts/03_fastp.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "DATA=\"data\"\n",
+        "RESULTS=\"results/trimmed\"\n",
+        "\n",
+        "mkdir -p \"$RESULTS\"\n",
+        "\n",
+        "echo \"Running fastp on SRR29928471...\"\n",
+        "\n",
+        "fastp \\\n",
+        "    -i \"$DATA/SRR29928471_1.fastq\" \\\n",
+        "    -I \"$DATA/SRR29928471_2.fastq\" \\\n",
+        "    -o \"$RESULTS/SRR29928471_1.trimmed.fastq\" \\\n",
+        "    -O \"$RESULTS/SRR29928471_2.trimmed.fastq\" \\\n",
+        "    --detect_adapter_for_pe \\\n",
+        "    --thread 2 \\\n",
+        "    --html \"$RESULTS/fastp.html\" \\\n",
+        "    --json \"$RESULTS/fastp.json\"\n",
+        "\n",
+        "echo \"fastp completed successfully.\"\n",
+        "\n",
+        "ls -lh \"$RESULTS\""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "m6Hw31Y2SuFt",
+        "outputId": "d2438264-c5a7-4442-aa68-bebf6eeabe97"
+      },
+      "execution_count": 43,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing /content/NGS-Pipeline/scripts/03_fastp.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x /content/NGS-Pipeline/scripts/03_fastp.sh"
+      ],
+      "metadata": {
+        "id": "B0S-jz7US0fa"
+      },
+      "execution_count": 44,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline\n",
+        "!./scripts/03_fastp.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "pgQS4eUCS1hJ",
+        "outputId": "8b15acda-2c36-46c8-c662-9d9b03806e8f"
+      },
+      "execution_count": 45,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n",
+            "Running fastp on SRR29928471...\n",
+            "Detecting adapter sequence for read1...\n",
+            ">Illumina TruSeq Adapter Read 1\n",
+            "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA\n",
+            "\n",
+            "Detecting adapter sequence for read2...\n",
+            ">Illumina TruSeq Adapter Read 2\n",
+            "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT\n",
+            "\n",
+            "Read1 before filtering:\n",
+            "total reads: 22622351\n",
+            "total bases: 3393352650\n",
+            "Q20 bases: 3331612055(98.1805%)\n",
+            "Q30 bases: 3218793856(94.8559%)\n",
+            "\n",
+            "Read2 before filtering:\n",
+            "total reads: 22622351\n",
+            "total bases: 3393352650\n",
+            "Q20 bases: 3296755508(97.1533%)\n",
+            "Q30 bases: 3119835418(91.9396%)\n",
+            "\n",
+            "Read1 after filtering:\n",
+            "total reads: 22437612\n",
+            "total bases: 3354390272\n",
+            "Q20 bases: 3300994095(98.4082%)\n",
+            "Q30 bases: 3191912804(95.1563%)\n",
+            "\n",
+            "Read2 after filtering:\n",
+            "total reads: 22437612\n",
+            "total bases: 3354408610\n",
+            "Q20 bases: 3269348047(97.4642%)\n",
+            "Q30 bases: 3097003873(92.3264%)\n",
+            "\n",
+            "Filtering result:\n",
+            "reads passed filter: 44875224\n",
+            "reads failed due to low quality: 365856\n",
+            "reads failed due to too many N: 3138\n",
+            "reads failed due to too short: 484\n",
+            "reads with adapter trimmed: 873754\n",
+            "bases trimmed due to adapters: 22654092\n",
+            "\n",
+            "Duplication rate: 17.6831%\n",
+            "\n",
+            "Insert size peak (evaluated by paired-end reads): 269\n",
+            "\n",
+            "JSON report: results/trimmed/fastp.json\n",
+            "HTML report: results/trimmed/fastp.html\n",
+            "\n",
+            "fastp -i data/SRR29928471_1.fastq -I data/SRR29928471_2.fastq -o results/trimmed/SRR29928471_1.trimmed.fastq -O results/trimmed/SRR29928471_2.trimmed.fastq --detect_adapter_for_pe --thread 2 --html results/trimmed/fastp.html --json results/trimmed/fastp.json \n",
+            "fastp v0.23.4, time used: 680 seconds\n",
+            "fastp completed successfully.\n",
+            "total 19G\n",
+            "-rw-r--r-- 1 root root 482K Sep 10 12:43 fastp.html\n",
+            "-rw-r--r-- 1 root root 136K Sep 10 12:43 fastp.json\n",
+            "-rw-r--r-- 1 root root 9.3G Sep 10 12:43 SRR29928471_1.trimmed.fastq\n",
+            "-rw-r--r-- 1 root root 9.3G Sep 10 12:43 SRR29928471_2.trimmed.fastq\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -lh results/trimmed/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yaT20HbKTqSR",
+        "outputId": "3dfab51e-aeaa-4eda-b4b8-25729f176b78"
+      },
+      "execution_count": 46,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 19G\n",
+            "-rw-r--r-- 1 root root 482K Sep 10 12:43 fastp.html\n",
+            "-rw-r--r-- 1 root root 136K Sep 10 12:43 fastp.json\n",
+            "-rw-r--r-- 1 root root 9.3G Sep 10 12:43 SRR29928471_1.trimmed.fastq\n",
+            "-rw-r--r-- 1 root root 9.3G Sep 10 12:43 SRR29928471_2.trimmed.fastq\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile /content/NGS-Pipeline/scripts/04_fastqc_trimmed.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "DATA=\"results/trimmed\"\n",
+        "RESULTS=\"results/fastqc_trimmed\"\n",
+        "\n",
+        "mkdir -p \"$RESULTS\"\n",
+        "\n",
+        "echo \"Running FastQC on trimmed reads...\"\n",
+        "\n",
+        "fastqc \\\n",
+        "    \"$DATA/SRR29928471_1.trimmed.fastq\" \\\n",
+        "    \"$DATA/SRR29928471_2.trimmed.fastq\" \\\n",
+        "    --outdir \"$RESULTS\" \\\n",
+        "    --threads 2\n",
+        "\n",
+        "echo \"Trimmed-read FastQC completed.\"\n",
+        "\n",
+        "ls -lh \"$RESULTS\""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "xvJO8JSqTyCl",
+        "outputId": "8a030170-a7b7-432e-f127-c1a5acdff587"
+      },
+      "execution_count": 47,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing /content/NGS-Pipeline/scripts/04_fastqc_trimmed.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x /content/NGS-Pipeline/scripts/04_fastqc_trimmed.sh"
+      ],
+      "metadata": {
+        "id": "PN6gLgUhT0A5"
+      },
+      "execution_count": 48,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline\n",
+        "!./scripts/04_fastqc_trimmed.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "BNCSI99OT4te",
+        "outputId": "198bf97a-f7da-4964-bf5f-1ea4ab05c271"
+      },
+      "execution_count": 50,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n",
+            "Running FastQC on trimmed reads...\n",
+            "[0.004s][warning][os,container] Cgroup memory controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "[0.004s][warning][os,container] Cgroup cpu controller path at '/sys/fs/cgroup' seems to have moved to '/../../jupyter-children', detected limits won't be accurate\n",
+            "null\n",
+            "null\n",
+            "Started analysis of SRR29928471_1.trimmed.fastq\n",
+            "Started analysis of SRR29928471_2.trimmed.fastq\n",
+            "Approx 5% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 5% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 10% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 10% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 15% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 15% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 20% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 20% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 25% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 25% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 30% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 30% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 35% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 35% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 40% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 40% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 45% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 45% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 50% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 50% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 55% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 55% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 60% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 60% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 65% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 65% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 70% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 70% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 75% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 75% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 80% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 80% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 85% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 85% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 90% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 90% complete for SRR29928471_1.trimmed.fastq\n",
+            "Approx 95% complete for SRR29928471_2.trimmed.fastq\n",
+            "Approx 95% complete for SRR29928471_1.trimmed.fastq\n",
+            "Analysis complete for SRR29928471_2.trimmed.fastq\n",
+            "Analysis complete for SRR29928471_1.trimmed.fastq\n",
+            "Trimmed-read FastQC completed.\n",
+            "total 3.0M\n",
+            "-rw-r--r-- 1 root root 606K Sep 10 12:56 SRR29928471_1.trimmed_fastqc.html\n",
+            "-rw-r--r-- 1 root root 883K Sep 10 12:56 SRR29928471_1.trimmed_fastqc.zip\n",
+            "-rw-r--r-- 1 root root 608K Sep 10 12:56 SRR29928471_2.trimmed_fastqc.html\n",
+            "-rw-r--r-- 1 root root 891K Sep 10 12:56 SRR29928471_2.trimmed_fastqc.zip\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -lh results/fastqc_trimmed/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Db2n2FHST7j_",
+        "outputId": "252d04a7-ef49-45d0-9a08-b7a482ed5b53"
+      },
+      "execution_count": 51,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 3.0M\n",
+            "-rw-r--r-- 1 root root 606K Sep 10 12:56 SRR29928471_1.trimmed_fastqc.html\n",
+            "-rw-r--r-- 1 root root 883K Sep 10 12:56 SRR29928471_1.trimmed_fastqc.zip\n",
+            "-rw-r--r-- 1 root root 608K Sep 10 12:56 SRR29928471_2.trimmed_fastqc.html\n",
+            "-rw-r--r-- 1 root root 891K Sep 10 12:56 SRR29928471_2.trimmed_fastqc.zip\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile /content/NGS-Pipeline/scripts/05_multiqc.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "mkdir -p results/multiqc\n",
+        "\n",
+        "echo \"Running MultiQC...\"\n",
+        "\n",
+        "multiqc results/ \\\n",
+        "    --outdir results/multiqc \\\n",
+        "    --force\n",
+        "\n",
+        "echo \"MultiQC completed.\"\n",
+        "\n",
+        "ls -lh results/multiqc/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "FkGZvBokT-0F",
+        "outputId": "9ff89a99-ebbf-47a3-cc20-5175f7492d46"
+      },
+      "execution_count": 52,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing /content/NGS-Pipeline/scripts/05_multiqc.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x /content/NGS-Pipeline/scripts/05_multiqc.sh"
+      ],
+      "metadata": {
+        "id": "yMMThwBLULLg"
+      },
+      "execution_count": 53,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!./scripts/05_multiqc.sh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "quGG9L8qUPwK",
+        "outputId": "e4146f7f-a538-496a-fcef-9135e293f137"
+      },
+      "execution_count": 54,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Running MultiQC...\n",
+            "\n",
+            "\u001b[91m///\u001b[0m \u001b]8;id=573117;https://multiqc.info\u001b\\\u001b[1mMultiQC\u001b[0m\u001b]8;;\u001b\\ 🔍 \u001b[2mv1.35\u001b[0m\n",
+            "\n",
+            "\u001b[34m       file_search\u001b[0m | Search path: /content/NGS-Pipeline/results\n",
+            "\u001b[2K         \u001b[34msearching\u001b[0m | \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[35m100%\u001b[0m \u001b[32m13/13\u001b[0m  \n",
+            "\u001b[?25h\u001b[34m             fastp\u001b[0m | Found 1 reports\n",
+            "\u001b[34m            fastqc\u001b[0m | Found 2 reports\n",
+            "\u001b[34m     write_results\u001b[0m | Data        : results/multiqc/multiqc_data\n",
+            "\u001b[34m     write_results\u001b[0m | Report      : results/multiqc/multiqc_report.html\n",
+            "\u001b[34m           multiqc\u001b[0m | MultiQC complete\n",
+            "MultiQC completed.\n",
+            "total 2.3M\n",
+            "drwxr-xr-x 2 root root 4.0K Sep 10 12:57 multiqc_data\n",
+            "-rw-r--r-- 1 root root 2.3M Sep 10 12:57 multiqc_report.html\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!hisat2 --version"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "Pc0crVr_ZdyN",
+        "outputId": "d091544c-68ab-4634-b2c1-1e9ee29b988e"
+      },
+      "execution_count": 55,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/usr/bin/hisat2-align-s version 2.2.1\n",
+            "64-bit\n",
+            "Built on Debian\n",
+            "14 October 2022\n",
+            "Compiler: gcc version 12.2.0 (Ubuntu 12.2.0-9ubuntu1) \n",
+            "Options: -O3   -funroll-loops -g3 -Wdate-time -D_FORTIFY_SOURCE=2 -std=c++11\n",
+            "Sizeof {int, long, long long, void*, size_t, off_t}: {4, 8, 8, 8, 8, 8}\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline/reference\n",
+        "!wget -c https://genome-idx.s3.amazonaws.com/hisat/grch38_genome.tar.gz"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "91i6tqsBZjlD",
+        "outputId": "c78c3553-d801-43fa-a269-240cde91c4a0"
+      },
+      "execution_count": 56,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline/reference\n",
+            "--2026-09-10 12:59:03--  https://genome-idx.s3.amazonaws.com/hisat/grch38_genome.tar.gz\n",
+            "Resolving genome-idx.s3.amazonaws.com (genome-idx.s3.amazonaws.com)... 16.15.253.95, 16.15.254.128, 54.231.232.121, ...\n",
+            "Connecting to genome-idx.s3.amazonaws.com (genome-idx.s3.amazonaws.com)|16.15.253.95|:443... connected.\n",
+            "HTTP request sent, awaiting response... 200 OK\n",
+            "Length: 4210306865 (3.9G) [binary/octet-stream]\n",
+            "Saving to: ‘grch38_genome.tar.gz’\n",
+            "\n",
+            "grch38_genome.tar.g 100%[===================>]   3.92G  18.4MB/s    in 3m 55s  \n",
+            "\n",
+            "2026-09-10 13:02:58 (17.1 MB/s) - ‘grch38_genome.tar.gz’ saved [4210306865/4210306865]\n",
+            "\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!tar -xzf grch38_genome.tar.gz"
+      ],
+      "metadata": {
+        "id": "d9LL9x-hZ9_I"
+      },
+      "execution_count": 57,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -lh"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zuPwaILwa9ts",
+        "outputId": "3ba50bda-1cc5-4c21-f0b0-a09daa07b5a9"
+      },
+      "execution_count": 58,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 4.0G\n",
+            "drwxr-sr-x 2 1041 1008 4.0K Mar 17  2016 grch38\n",
+            "-rw-r--r-- 1 root root 4.0G Jun 25  2020 grch38_genome.tar.gz\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%%writefile /content/NGS-Pipeline/scripts/06_hisat2_alignment.sh\n",
+        "#!/bin/bash\n",
+        "\n",
+        "set -e\n",
+        "\n",
+        "INDEX=\"reference/grch38/genome\"\n",
+        "READ1=\"results/trimmed/SRR29928471_1.trimmed.fastq\"\n",
+        "READ2=\"results/trimmed/SRR29928471_2.trimmed.fastq\"\n",
+        "RESULTS=\"results/alignment\"\n",
+        "\n",
+        "mkdir -p \"$RESULTS\"\n",
+        "\n",
+        "echo \"Starting HISAT2 alignment...\"\n",
+        "\n",
+        "hisat2 \\\n",
+        "    -p 2 \\\n",
+        "    -x \"$INDEX\" \\\n",
+        "    -1 \"$READ1\" \\\n",
+        "    -2 \"$READ2\" \\\n",
+        "    -S \"$RESULTS/SRR29928471.sam\" \\\n",
+        "    --summary-file \"$RESULTS/SRR29928471_alignment_summary.txt\"\n",
+        "\n",
+        "echo \"HISAT2 alignment completed.\""
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "KMu7CUH_bDNq",
+        "outputId": "8566b329-dc25-4b7f-d81c-8c78b8b3d8f1"
+      },
+      "execution_count": 59,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing /content/NGS-Pipeline/scripts/06_hisat2_alignment.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls -lh /content/NGS-Pipeline/reference/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "zBo6JImabGxs",
+        "outputId": "ea2af7ce-4795-4632-8806-06f18679e400"
+      },
+      "execution_count": 60,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "total 4.0G\n",
+            "drwxr-sr-x 2 1041 1008 4.0K Mar 17  2016 grch38\n",
+            "-rw-r--r-- 1 root root 4.0G Jun 25  2020 grch38_genome.tar.gz\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline\n",
+        "!ls -lh reference/grch38/"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "M4AMn2LVbhA5",
+        "outputId": "c0facde0-2181-4b29-9b81-8663ba9f8be4"
+      },
+      "execution_count": 61,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n",
+            "total 4.2G\n",
+            "-rw-r--r-- 1 1041 1008 941M Mar 12  2016 genome.1.ht2\n",
+            "-rw-r--r-- 1 1041 1008 703M Mar 12  2016 genome.2.ht2\n",
+            "-rw-r--r-- 1 1041 1008  12K Mar 12  2016 genome.3.ht2\n",
+            "-rw-r--r-- 1 1041 1008 703M Mar 12  2016 genome.4.ht2\n",
+            "-rw-r--r-- 1 1041 1008 1.3G Mar 12  2016 genome.5.ht2\n",
+            "-rw-r--r-- 1 1041 1008 716M Mar 12  2016 genome.6.ht2\n",
+            "-rw-r--r-- 1 1041 1008    8 Mar 12  2016 genome.7.ht2\n",
+            "-rw-r--r-- 1 1041 1008    8 Mar 12  2016 genome.8.ht2\n",
+            "-rwxr-xr-x 1 1041 1008 1.5K Mar 17  2016 make_grch38.sh\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!chmod +x /content/NGS-Pipeline/scripts/06_hisat2_alignment.sh"
+      ],
+      "metadata": {
+        "id": "KRhsiZNHboP0"
+      },
+      "execution_count": 62,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "%cd /content/NGS-Pipeline"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "cOFblaAmbpqF",
+        "outputId": "204b866b-941d-4faa-fa0b-0f89a68fb6df"
+      },
+      "execution_count": 63,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "/content/NGS-Pipeline\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!find /content/NGS-Pipeline -type f -size +50M -print"
+      ],
+      "metadata": {
+        "id": "tpQCFQk0ncZz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!du -sh /content/NGS-Pipeline"
+      ],
+      "metadata": {
+        "id": "9_YXeGHznglT"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
